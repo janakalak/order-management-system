@@ -23,11 +23,17 @@ async function main() {
     },
   });
 
-  const deliveryServices = ["Trans Express", "DHL", "FedEx"];
-  for (const name of deliveryServices) {
-    const existing = await prisma.deliveryService.findFirst({ where: { name } });
-    if (!existing) {
-      await prisma.deliveryService.create({ data: { name } });
+  const deliveryServices = [
+    { name: "Trans Express", ratePerKg: 400 },
+    { name: "DHL", ratePerKg: 550 },
+    { name: "FedEx", ratePerKg: 500 },
+  ];
+  for (const svc of deliveryServices) {
+    const existing = await prisma.deliveryService.findFirst({ where: { name: svc.name } });
+    if (existing) {
+      await prisma.deliveryService.update({ where: { id: existing.id }, data: { ratePerKg: svc.ratePerKg } });
+    } else {
+      await prisma.deliveryService.create({ data: svc });
     }
   }
 

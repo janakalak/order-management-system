@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import type { DeliveryService } from "@/lib/types";
 
 interface Props {
@@ -31,11 +31,30 @@ export default function DeliveryModal({
   const [charge, setCharge] = useState(initCharge);
   const [free, setFree] = useState(initFree);
 
+  const calcCharge = useCallback(
+    (serviceName: string, kg: number) => {
+      const svc = services.find((s) => s.name === serviceName);
+      if (!svc) return 0;
+      return Math.round(kg * svc.ratePerKg * 100) / 100;
+    },
+    [services]
+  );
+
   useEffect(() => {
     fetch("/api/delivery-services")
       .then((res) => res.json())
       .then(setServices);
   }, []);
+
+  const handleServiceChange = (name: string) => {
+    setService(name);
+    if (!free) setCharge(calcCharge(name, weight));
+  };
+
+  const handleWeightChange = (kg: number) => {
+    setWeight(kg);
+    if (!free) setCharge(calcCharge(service, kg));
+  };
 
   return (
     <div className="modal-overlay" onClick={onClose}>
@@ -56,7 +75,7 @@ export default function DeliveryModal({
             <select
               className="input-field flex-1"
               value={service}
-              onChange={(e) => setService(e.target.value)}
+              onChange={(e) => handleServiceChange(e.target.value)}
             >
               <option value="">Select...</option>
               {services.map((s) => (
@@ -75,7 +94,7 @@ export default function DeliveryModal({
               type="number"
               className="input-field flex-1"
               value={weight}
-              onChange={(e) => setWeight(Number(e.target.value))}
+              onChange={(e) => handleWeightChange(Number(e.target.value))}
             />
           </div>
 
@@ -83,9 +102,9 @@ export default function DeliveryModal({
             <label className="w-40 text-sm font-medium">Delivery Charge:</label>
             <input
               type="number"
-              className="input-field flex-1"
+              className="input-field flex-1 bg-gray-50"
               value={charge}
-              onChange={(e) => setCharge(Number(e.target.value))}
+              readOnly
               disabled={free}
             />
           </div>
@@ -94,7 +113,12 @@ export default function DeliveryModal({
             <input
               type="checkbox"
               checked={free}
-              onChange={(e) => setFree(e.target.checked)}
+              onChange={(e) => {
+                const isFree = e.target.checked;
+                setFree(isFree);
+                if (isFree) setCharge(0);
+                else setCharge(calcCharge(service, weight));
+              }}
               className="w-4 h-4"
             />
             <span className="text-sm">Free Delivery Charge</span>

@@ -12,6 +12,8 @@ export default function SettingsModal({ onClose }: Props) {
   const [settings, setSettings] = useState<Settings | null>(null);
   const [deliveryServices, setDeliveryServices] = useState<DeliveryService[]>([]);
   const [newServiceName, setNewServiceName] = useState("");
+  const [newServiceRate, setNewServiceRate] = useState(0);
+  const [selectedServiceId, setSelectedServiceId] = useState("");
 
   useEffect(() => {
     fetch("/api/settings")
@@ -19,7 +21,10 @@ export default function SettingsModal({ onClose }: Props) {
       .then(setSettings);
     fetch("/api/delivery-services")
       .then((res) => res.json())
-      .then(setDeliveryServices);
+      .then((data: DeliveryService[]) => {
+        setDeliveryServices(data);
+        if (data.length > 0) setSelectedServiceId(data[0].id);
+      });
   }, []);
 
   const handleSave = async () => {
@@ -39,31 +44,69 @@ export default function SettingsModal({ onClose }: Props) {
     }
   };
 
+  const refreshServices = async () => {
+    const res = await fetch("/api/delivery-services");
+    const data: DeliveryService[] = await res.json();
+    setDeliveryServices(data);
+    return data;
+  };
+
   const handleAddService = async () => {
     if (!newServiceName.trim()) return;
     try {
       await fetch("/api/delivery-services", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ name: newServiceName }),
+        body: JSON.stringify({ name: newServiceName, ratePerKg: newServiceRate }),
       });
       setNewServiceName("");
-      const res = await fetch("/api/delivery-services");
-      setDeliveryServices(await res.json());
+      setNewServiceRate(0);
+      const data = await refreshServices();
+      if (data.length > 0) setSelectedServiceId(data[data.length - 1].id);
       toast.success("Service added!");
     } catch {
       toast.error("Failed to add service");
     }
   };
 
+  const handleUpdateService = async () => {
+    const svc = deliveryServices.find((s) => s.id === selectedServiceId);
+    if (!svc) return;
+    try {
+      await fetch("/api/delivery-services", {
+        method: "PUT",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          id: svc.id,
+          name: newServiceName || svc.name,
+          ratePerKg: newServiceRate,
+        }),
+      });
+      await refreshServices();
+      toast.success("Service updated!");
+    } catch {
+      toast.error("Failed to update service");
+    }
+  };
+
   const handleDeleteService = async (id: string) => {
     try {
       await fetch(`/api/delivery-services?id=${id}`, { method: "DELETE" });
-      const res = await fetch("/api/delivery-services");
-      setDeliveryServices(await res.json());
+      const data = await refreshServices();
+      if (data.length > 0) setSelectedServiceId(data[0].id);
+      else setSelectedServiceId("");
       toast.success("Service deleted!");
     } catch {
       toast.error("Failed to delete service");
+    }
+  };
+
+  const handleSelectService = (id: string) => {
+    setSelectedServiceId(id);
+    const svc = deliveryServices.find((s) => s.id === id);
+    if (svc) {
+      setNewServiceName(svc.name);
+      setNewServiceRate(svc.ratePerKg);
     }
   };
 
@@ -232,18 +275,33 @@ export default function SettingsModal({ onClose }: Props) {
             <div>
               <h4 className="font-bold mb-3">Delivery Services</h4>
               <div className="flex gap-2 mb-3">
-                <select className="input-field flex-1">
+                <select
+                  className="input-field flex-1"
+                  value={selectedServiceId}
+                  onChange={(e) => handleSelectService(e.target.value)}
+                >
                   {deliveryServices.map((s) => (
-                    <option key={s.id} value={s.name}>
-                      {s.name}
+                    <option key={s.id} value={s.id}>
+                      {s.name} (Rs.{s.ratePerKg}/KG)
                     </option>
                   ))}
                 </select>
                 <button
+                  className="btn-primary text-sm"
+                  onClick={handleAddService}
+                >
+                  Insert
+                </button>
+                <button
+                  className="btn-secondary text-sm"
+                  onClick={handleUpdateService}
+                >
+                  Update
+                </button>
+                <button
                   className="btn-danger text-sm"
                   onClick={() => {
-                    const selected = deliveryServices[0];
-                    if (selected) handleDeleteService(selected.id);
+                    if (selectedServiceId) handleDeleteService(selectedServiceId);
                   }}
                 >
                   Delete
@@ -252,16 +310,17 @@ export default function SettingsModal({ onClose }: Props) {
               <div className="flex gap-2">
                 <input
                   className="input-field flex-1"
-                  placeholder="New service name"
+                  placeholder="Service name"
                   value={newServiceName}
                   onChange={(e) => setNewServiceName(e.target.value)}
                 />
-                <button
-                  className="btn-primary text-sm"
-                  onClick={handleAddService}
-                >
-                  Insert
-                </button>
+                <input
+                  type="number"
+                  className="input-field w-32"
+                  placeholder="Rate/KG"
+                  value={newServiceRate}
+                  onChange={(e) => setNewServiceRate(Number(e.target.value))}
+                />
               </div>
             </div>
           )}
