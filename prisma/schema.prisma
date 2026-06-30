@@ -1,0 +1,104 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../src/generated/prisma"
+}
+
+datasource db {
+  provider = "sqlite"
+}
+
+model Product {
+  id          String      @id @default(cuid())
+  productId   String      @unique
+  description String
+  cost        Float
+  sellingPrice Float
+  stock       Int         @default(0)
+  createdAt   DateTime    @default(now())
+  updatedAt   DateTime    @updatedAt
+  orderItems  OrderItem[]
+}
+
+model Customer {
+  id        String   @id @default(cuid())
+  name      String
+  address   String   @default("")
+  contact1  String   @default("")
+  contact2  String   @default("")
+  email     String   @default("")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  orders    Order[]
+}
+
+model Order {
+  id             String      @id @default(cuid())
+  orderNumber    Int         @unique
+  date           DateTime    @default(now())
+  status         String      @default("Pending")
+  trackingNumber String      @default("")
+  deliveryService String     @default("")
+  packageWeight  Float       @default(0)
+  deliveryCharge Float       @default(0)
+  freeDelivery   Boolean     @default(false)
+  discount       Float       @default(0)
+  discountType   String      @default("percentage")
+  subTotal       Float       @default(0)
+  total          Float       @default(0)
+  paidAmount     Float       @default(0)
+  note           String      @default("")
+  isDraft        Boolean     @default(false)
+  customerId     String?
+  customer       Customer?   @relation(fields: [customerId], references: [id])
+  items          OrderItem[]
+  createdAt      DateTime    @default(now())
+  updatedAt      DateTime    @updatedAt
+}
+
+model OrderItem {
+  id          String  @id @default(cuid())
+  quantity    Int
+  unitPrice   Float
+  cost        Float   @default(0)
+  discount    Float   @default(0)
+  discountType String @default("percentage")
+  total       Float
+  orderId     String
+  order       Order   @relation(fields: [orderId], references: [id], onDelete: Cascade)
+  productId   String
+  product     Product @relation(fields: [productId], references: [id])
+}
+
+model CashEntry {
+  id        String   @id @default(cuid())
+  date      DateTime @default(now())
+  type      String
+  amount    Float
+  note      String   @default("")
+  createdAt DateTime @default(now())
+}
+
+model Settings {
+  id                    String  @id @default("default")
+  resetOnConfirm        Boolean @default(false)
+  directPrintOnConfirm  Boolean @default(false)
+  enableLowStockWarning Boolean @default(true)
+  lowStockLimit         Int     @default(5)
+  enableDeliveryOptions Boolean @default(true)
+  defaultStatus         String  @default("Pending")
+  companyName           String  @default("My Company")
+  companyAddress        String  @default("")
+  companyPhone          String  @default("")
+  companyEmail          String  @default("")
+}
+
+model DeliveryService {
+  id   String @id @default(cuid())
+  name String @unique
+}
+
+model InvoiceTemplate {
+  id      String @id @default(cuid())
+  name    String @unique
+  content String
+}

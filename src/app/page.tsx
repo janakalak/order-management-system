@@ -1,65 +1,148 @@
-import Image from "next/image";
+"use client";
+
+import { useState } from "react";
+import OrderPage from "@/components/OrderPage";
+import ProductsModal from "@/components/ProductsModal";
+import OrdersListModal from "@/components/OrdersListModal";
+import CustomersModal from "@/components/CustomersModal";
+import SalesModal from "@/components/SalesModal";
+import CashModal from "@/components/CashModal";
+import SettingsModal from "@/components/SettingsModal";
+
+type ModalType =
+  | "products"
+  | "orders"
+  | "invoices"
+  | "quotations"
+  | "drafts"
+  | "sales"
+  | "customers"
+  | "cash"
+  | "settings"
+  | null;
 
 export default function Home() {
+  const [activeModal, setActiveModal] = useState<ModalType>(null);
+  const [restrictedMode, setRestrictedMode] = useState(false);
+
   return (
-    <div className="flex flex-col flex-1 items-center justify-center bg-zinc-50 font-sans dark:bg-black">
-      <main className="flex flex-1 w-full max-w-3xl flex-col items-center justify-between py-32 px-16 bg-white dark:bg-black sm:items-start">
-        <Image
-          className="dark:invert"
-          src="/next.svg"
-          alt="Next.js logo"
-          width={100}
-          height={20}
-          priority
-        />
-        <div className="flex flex-col items-center gap-6 text-center sm:items-start sm:text-left">
-          <h1 className="max-w-xs text-3xl font-semibold leading-10 tracking-tight text-black dark:text-zinc-50">
-            To get started, edit the page.tsx file.
-          </h1>
-          <p className="max-w-md text-lg leading-8 text-zinc-600 dark:text-zinc-400">
-            Looking for a starting point or more instructions? Head over to{" "}
-            <a
-              href="https://vercel.com/templates?framework=next.js&utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+    <div className="min-h-screen flex flex-col">
+      <header className="bg-white border-b border-gray-200 px-4 py-2">
+        <div className="flex items-center justify-between">
+          <div className="flex items-center gap-4">
+            <h1 className="text-lg font-bold text-blue-600">OMS</h1>
+            <button
+              onClick={() => setRestrictedMode(!restrictedMode)}
+              className={`text-xs px-3 py-1 rounded border ${
+                restrictedMode
+                  ? "bg-red-50 border-red-300 text-red-700"
+                  : "bg-gray-50 border-gray-300 text-gray-600"
+              }`}
             >
-              Templates
-            </a>{" "}
-            or the{" "}
-            <a
-              href="https://nextjs.org/learn?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-              className="font-medium text-zinc-950 dark:text-zinc-50"
+              Restricted Mode : {restrictedMode ? "ON" : "OFF"}
+            </button>
+          </div>
+          <nav className="flex gap-2">
+            <button
+              onClick={() => setActiveModal("products")}
+              className="nav-tab"
             >
-              Learning
-            </a>{" "}
-            center.
-          </p>
+              Products
+            </button>
+            <button
+              onClick={() => setActiveModal("orders")}
+              className="nav-tab"
+            >
+              Orders
+            </button>
+            <button
+              onClick={() => setActiveModal("invoices")}
+              className="nav-tab"
+            >
+              Invoices
+            </button>
+            <button
+              onClick={() => setActiveModal("quotations")}
+              className="nav-tab"
+            >
+              Quotations
+            </button>
+            <button
+              onClick={() => setActiveModal("drafts")}
+              className="nav-tab"
+            >
+              Drafts
+            </button>
+            <button
+              onClick={() => setActiveModal("sales")}
+              className="nav-tab"
+            >
+              Sales
+            </button>
+            <button
+              onClick={() => setActiveModal("customers")}
+              className="nav-tab"
+            >
+              Customers
+            </button>
+            <button
+              onClick={() => setActiveModal("cash")}
+              className="nav-tab"
+            >
+              Cash
+            </button>
+          </nav>
+          <div className="flex gap-2">
+            <button
+              onClick={() => setActiveModal("settings")}
+              className="nav-tab"
+            >
+              Settings
+            </button>
+          </div>
         </div>
-        <div className="flex flex-col gap-4 text-base font-medium sm:flex-row">
-          <a
-            className="flex h-12 w-full items-center justify-center gap-2 rounded-full bg-foreground px-5 text-background transition-colors hover:bg-[#383838] dark:hover:bg-[#ccc] md:w-[158px]"
-            href="https://vercel.com/new?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            <Image
-              className="dark:invert"
-              src="/vercel.svg"
-              alt="Vercel logomark"
-              width={16}
-              height={16}
-            />
-            Deploy Now
-          </a>
-          <a
-            className="flex h-12 w-full items-center justify-center rounded-full border border-solid border-black/[.08] px-5 transition-colors hover:border-transparent hover:bg-black/[.04] dark:border-white/[.145] dark:hover:bg-[#1a1a1a] md:w-[158px]"
-            href="https://nextjs.org/docs?utm_source=create-next-app&utm_medium=appdir-template-tw&utm_campaign=create-next-app"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Documentation
-          </a>
-        </div>
+      </header>
+
+      <main className="flex-1">
+        <OrderPage restrictedMode={restrictedMode} />
       </main>
+
+      {activeModal === "products" && (
+        <ProductsModal onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === "orders" && (
+        <OrdersListModal onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === "invoices" && (
+        <OrdersListModal
+          onClose={() => setActiveModal(null)}
+          filterType="invoices"
+        />
+      )}
+      {activeModal === "quotations" && (
+        <OrdersListModal
+          onClose={() => setActiveModal(null)}
+          filterType="quotations"
+        />
+      )}
+      {activeModal === "drafts" && (
+        <OrdersListModal
+          onClose={() => setActiveModal(null)}
+          filterType="drafts"
+        />
+      )}
+      {activeModal === "sales" && (
+        <SalesModal onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === "customers" && (
+        <CustomersModal onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === "cash" && (
+        <CashModal onClose={() => setActiveModal(null)} />
+      )}
+      {activeModal === "settings" && (
+        <SettingsModal onClose={() => setActiveModal(null)} />
+      )}
     </div>
   );
 }
