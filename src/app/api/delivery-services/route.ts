@@ -10,7 +10,23 @@ export async function GET() {
 
 export async function POST(request: NextRequest) {
   const body = await request.json();
-  const service = await prisma.deliveryService.create({ data: body });
+  const service = await prisma.deliveryService.create({
+    data: {
+      name: body.name,
+      ratePerKg: body.ratePerKg ?? 0,
+    },
+  });
+  return Response.json(service);
+}
+
+export async function PUT(request: NextRequest) {
+  const body = await request.json();
+  const { id, ...data } = body;
+  if (!id) return Response.json({ error: "ID required" }, { status: 400 });
+  const service = await prisma.deliveryService.update({
+    where: { id },
+    data,
+  });
   return Response.json(service);
 }
 

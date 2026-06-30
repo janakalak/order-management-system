@@ -84,6 +84,7 @@ export interface Settings {
 export interface DeliveryService {
   id: string;
   name: string;
+  ratePerKg: number;
 }
 
 export interface InvoiceTemplate {

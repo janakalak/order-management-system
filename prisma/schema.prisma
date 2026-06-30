@@ -93,8 +93,9 @@ model Settings {
 }
 
 model DeliveryService {
-  id   String @id @default(cuid())
-  name String @unique
+  id        String @id @default(cuid())
+  name      String @unique
+  ratePerKg Float  @default(0)
 }
 
 model InvoiceTemplate {
